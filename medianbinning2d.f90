@@ -70,26 +70,44 @@ subroutine medianbinning2d(n,nx,ny,x0,dx,y0,dy,x,y,z,npb,binmed,info)
     nrun = i1 - i0 + 1
     ! store the number of values
     npb(ixbin(i0), iybin(i0)) = nrun
-    ! easy cases:
-    if(nrun .eq. 1) then
-      binmed(ixbin(i0), iybin(i0)) = zcopy(i0)
-    else if(nrun .eq. 2) then
-      binmed(ixbin(i0), iybin(i0)) = (zcopy(i0) + zcopy(i1))*0.5
-    else
-      ! sort this list of values
-      call qsort_real(zcopy(i0:i1),nrun)
-      ! two cases for the median
-      if(mod(nrun,2) .eq. 0) then
-        ! even cases: take the mean of the two middle values
-        k = (i0-1) + nrun/2
-        binmed(ixbin(i0), iybin(i0)) = (zcopy(k) + zcopy(k+1))*0.5
-      else 
-        ! odd cases: take the sole middle value
-        k = (i0-1) + (nrun+1)/2
-        binmed(ixbin(i0), iybin(i0)) = zcopy(k)
-      end if
-    end if
+    ! calculate the median
+    binmed(ixbin(i0), iybin(i0)) = median(zcopy(i0:i1),nrun)
   end do
 
   Return
 End Subroutine Medianbinning2d
+
+function median(x,n) result(med)
+  implicit none
+  ! arguments
+  integer, intent(in)  :: n
+  real,    intent(in)  :: x(n)
+  real                 :: med
+  ! local variables
+  integer :: ord(n)
+  integer :: k
+  
+  ! easy cases:
+  if(n .eq. 1) then
+     med = x(1)
+  else if(n .eq. 2) then
+     med = (x(1) + x(2)) * 0.5
+  else
+     ! standard case (need to sort)
+
+     ! sort this list of values
+     call qsort_real(x, ord, n)
+     ! two cases for the median
+     if(mod(n,2) .eq. 0) then
+        ! even cases: take the mean of the two middle values
+        k =  n/2
+        med = (x(ord(k)) + x(ord(k+1)))*0.5
+     else 
+        ! odd cases: take the sole middle value
+        k = (n+1)/2
+        med = x(ord(k))
+     end if
+  end if
+
+  return
+end function median
